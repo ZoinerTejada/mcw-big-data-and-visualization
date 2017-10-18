@@ -1,9 +1,9 @@
 # AdventureWorks Travel Intelligent App Deployment
-## Part of the Cortana Intelligence Suite Workshop
+## Part of the Microsoft Cloud Workshops
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://azuredeploy.net/)
 
-This GitHub repo exists to deploy the web application that is part of the *Cortana Intelligence Suite Workshop*. We are leveraging a capability of Azure called ARM templates which allow you to specifiy what your solution looks like from a deployment perspetive simply by using JSON code. This is a fairly simple use of ARM templates, but you can actually deploy very complex topologies using this technology - straight from source control. Pretty cool!!
+This GitHub repo exists to deploy the web application that is part of the *Big Data & Visualization Hands-on Lab*. We are leveraging a capability of Azure called ARM templates which allow you to specifiy what your solution looks like from a deployment perspetive simply by using JSON code. This is a fairly simple use of ARM templates, but you can actually deploy very complex topologies using this technology - straight from source control. Pretty cool!!
 
 You will need to have completed the requisite exercises in order to deploy this web application to your Azure subscription. You will also need to have created your free developer account at http://www.wunderground.com/weather/api/ and retrieved your developer API key.
 
@@ -23,6 +23,6 @@ After clicking the button, you will see a screen where you will need to provide 
 
 After the web app deployment is completed, you should be able to navigate to the URL provided and test your finished product. Congratulations!
 
-![alt text](/images/webapp.png "Azure Deployment GUI")
+![alt text](/AdventureWorksTravel/images/webapp.png "Azure Deployment GUI")
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://azuredeploy.net/)
