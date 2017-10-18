@@ -44,7 +44,7 @@
     "imageOffer": "WindowsServer",
     "vmApiVersion": "2015-06-15",
     "mydcsConfigurationFunction": "mydcsConfiguration.ps1\\Main",
-    "dscModuleUrl": "https://raw.githubusercontent.com/ZoinerTejada/PreDeployment/master/dsc.zip",
+    "dscModuleUrl": "https://raw.githubusercontent.com/ZoinerTejada/mcw-big-data-and-visualization/master/PreDeployment/dsc.zip",
     "storageApiVersion": "2016-01-01"
   },
   "resources": [
