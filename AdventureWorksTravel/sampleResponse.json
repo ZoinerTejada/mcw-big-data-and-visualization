@@ -1,0 +1,14 @@
+{"Results":
+	{"output1":
+		{
+			"type":"table",
+			"value":
+			{
+				"ColumnNames":["OriginAirportCode","Month","DayofMonth","CRSDepHour","DayOfWeek","Carrier","DestAirportCode","WindSpeed","SeaLevelPressure","HourlyPrecip","Scored Labels","Scored Probabilities","OriginLatitude","OriginLongitude"],
+				"ColumnTypes":["String","Int32","Int32","Double","Int32","String","String","Nullable`1","Double","Double","Int32","Double","Nullable`1","Nullable`1"],
+				"Values":[["SEA","10","31","0","7","DL","SFO","9","29.72","0.12","0","0.10242085903883","47.45","-122.3116667"]]
+			}
+		}
+	},
+"ContainerAllocationDurationMs":4275,"ExecutionDurationMs":2850,"IsWarmContainer":false
+}
