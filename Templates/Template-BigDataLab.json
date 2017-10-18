@@ -1,0 +1,212 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "appName": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 10,
+            "metadata": {
+                "description": "This should be a short (10 or fewer characters), but unique string that will be a prefix to all of the resources deployed. For example, if you type in smithcis, your Spark cluster will be called smithcisspark and your Lab VM will be called smithcislab. DO NOT INCLUDE ANY EXTRANEOUS CHARACTERS SUCH AS DASHES, UNDERSCORES, ETC."
+            }
+        },
+        "clusterLoginUserName": {
+            "type": "string",
+            "defaultValue": "demouser",
+            "metadata": {
+                "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+            }
+        },
+        "clusterLoginPassword": {
+            "type": "securestring",
+            "defaultValue": "Password.1!!",
+            "metadata": {
+                "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+            }
+        }
+    },
+  "variables": {
+    "cleanAppName": "[replace(replace(replace(toLower(parameters('appName')), '-', ''), '_', ''), '.', '')]",
+    "clusterName": "[concat(variables('cleanAppName'), 'spark')]",
+    "clusterStorageAccountName": "[concat(variables('cleanAppName'),'sparkstorage')]",
+    "mlStorageAccountName": "[concat(variables('cleanAppName'),'mlstorage')]",
+    "defaultApiVersion": "2015-05-01-preview",
+    "clusterApiVersion": "2015-03-01-preview",
+    "storageApiVersion": "2016-01-01",
+    "networkingApiVersion": "2015-06-15",
+    "mlApiVersion": "2016-04-01",
+    "mlLocation": "southcentralus",
+    "clusterWorkerNodeCount": 3,
+    "clusterVNetName": "[concat(variables('cleanAppName'),'-vnet')]",
+    "clusterVNetAddressSpace": "10.0.0.0/16",
+    "clusterVNetSubnetName": "default",
+    "clusterVNetSubnetAddressRange": "10.0.0.0/24",
+    "mlWorkspaceName": "[concat(variables('cleanAppName'), 'ml')]",
+    "mlResourceId": "[resourceId('Microsoft.MachineLearning/workspaces', variables('mlWorkspaceName'))]",
+    "mlStorageResourceId": "[resourceId('Microsoft.Storage/storageAccounts', variables('mlStorageAccountName'))]",
+    "sshUserName": "sshuser",
+    "sshPassword": "Abc!1234567890"
+  },
+  "resources": [
+    {
+        "name": "[variables('clusterStorageAccountName')]",
+        "type": "Microsoft.Storage/storageAccounts",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "[variables('storageApiVersion')]",
+        "sku": {
+          "name": "Standard_LRS",
+          "tier": "Standard"
+        },
+        "dependsOn": [],
+        "tags": {
+          "displayname": "clusterattachedstorage"
+         },
+        "kind": "Storage"
+      },
+      {
+          "name": "[variables('mlStorageAccountName')]",
+          "type": "Microsoft.Storage/storageAccounts",
+          "location": "[variables('mlLocation')]",
+          "apiVersion": "[variables('storageApiVersion')]",
+          "sku": {
+              "name": "Standard_LRS",
+              "tier": "Standard"
+          },
+          "dependsOn": [],
+          "tags": {
+              "displayname": "mlstorage"
+          },
+          "kind": "Storage"
+      },
+      {
+        "name": "[variables('mlWorkspaceName')]",  
+        "type": "Microsoft.MachineLearning/workspaces",
+        "location": "[variables('mlLocation')]",
+        "apiVersion": "[variables('mlApiVersion')]",
+        "dependsOn": [
+            "[variables('mlStorageResourceId')]"
+        ],
+        "properties": {
+            "UserStorageAccountId": "[variables('mlStorageResourceId')]"
+        }
+      },
+    {
+      "name": "[variables('clusterVNetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('networkingApiVersion')]",
+      "dependsOn": [ ],
+      "tags": { },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('clusterVNetAddressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('clusterVNetSubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('clusterVNetSubnetAddressRange')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+        "name": "[variables('clusterName')]",
+        "type": "Microsoft.HDInsight/clusters",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "[variables('clusterApiVersion')]",      
+        "dependsOn": [
+            "[concat('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]",
+            "[concat('Microsoft.Network/virtualNetworks/',variables('clusterVNetName'))]"
+        ],
+      "properties": {
+        "clusterVersion": "3.6",
+        "osType": "Linux",
+        "tier": "standard",
+        "clusterDefinition": {
+          "kind": "Spark",
+          "componentVersion": {
+            "Spark": "2.1"
+        },
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+              "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[concat(variables('clusterStorageAccountName'),'.blob.core.windows.net')]",
+              "isDefault": true,
+              "container": "sparkcontainer",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), variables('storageApiVersion')).keys[0].value]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": 2,
+              "hardwareProfile": {
+                "vmSize": "Standard_D12_V2"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[variables('sshUserName')]",
+                  "password": "[variables('sshPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
+              }
+            },
+            {
+              "name": "workernode",
+              "minInstanceCount": 1,
+              "targetInstanceCount": "[variables('clusterWorkerNodeCount')]",
+              "hardwareProfile": {
+                "vmSize": "Standard_D12_V2"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[variables('sshUserName')]",
+                  "password": "[variables('sshPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+    "outputs": {
+        "vnet": {
+            "type": "object",
+            "value": "[reference(resourceId('Microsoft.Network/virtualNetworks',variables('clusterVNetName')))]"
+        },
+        "sparkCluster": {
+            "type": "object",
+            "value": "[reference(resourceId('Microsoft.HDInsight/clusters',variables('clusterName')))]"
+        },
+        "mlWorkspaceObject": {
+            "type": "object",
+            "value": "[reference(variables('mlResourceId'), variables('mlApiVersion'))]"
+        },
+        "mlWorkspaceToken": {
+            "type": "object",
+            "value": "[listWorkspaceKeys(variables('mlResourceId'), variables('mlApiVersion'))]"
+        }
+    }
+}
